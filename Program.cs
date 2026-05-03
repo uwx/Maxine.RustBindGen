@@ -24,12 +24,11 @@ foreach (var type in asm.GetTypes())
 {
     foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
     {
-        if (method.GetCustomAttribute<UnmanagedCallersOnlyAttribute>() is not { } unmanagedCallersOnlyAttribute)
+        if (method.GetCustomAttribute<UnmanagedCallersOnlyAttribute>() is not { EntryPoint: { } name } unmanagedCallersOnlyAttribute)
         {
             continue;
         }
 
-        var name = unmanagedCallersOnlyAttribute.EntryPoint;
         var rustReturnType = MapCSharpTypeToRust(method.ReturnType) ??
                              $"/* Unsupported return type {method.ReturnType} */ std::ffi::c_void";
         var rustParamList = new List<string>();
