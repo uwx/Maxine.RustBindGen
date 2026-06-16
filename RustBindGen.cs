@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -43,6 +44,10 @@ public static class RustBindGen
                 }
 
                 sb.AppendLine($"unsafe {rustCallingConvention} {{");
+                if (method.GetCustomAttribute<DescriptionAttribute>() is { } desc)
+                {
+                    sb.AppendLine($"  /// {desc.Description.Replace("\n", "\n  /// ")}");
+                }
                 sb.AppendLine($"  pub fn {name}({string.Join(", ", rustParamList)}) -> {rustReturnType};");
                 sb.AppendLine("}");
                 sb.AppendLine();
@@ -57,6 +62,12 @@ public static class RustBindGen
             {
                 var rustFieldType = MapCSharpTypeToRust(field.FieldType) ??
                                     $"/* Unsupported field type {field.FieldType} */ std::ffi::c_void";
+                
+                if (field.GetCustomAttribute<DescriptionAttribute>() is { } desc)
+                {
+                    sb.AppendLine($"    /// {desc.Description.Replace("\n", "\n    /// ")}");
+                }
+                
                 sb.AppendLine($"    pub {ToSnakeCase(field.Name)}: {rustFieldType},");
             }
 
