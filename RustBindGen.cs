@@ -60,6 +60,12 @@ public static class RustBindGen
             sb.AppendLine($"pub struct {type.Name} {{");
             foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
+                // skip property backing fields
+                if (field.Name.Contains("k__BackingField"))
+                {
+                    continue;
+                }
+                
                 var rustFieldType = MapCSharpTypeToRust(field.FieldType) ??
                                     $"/* Unsupported field type {field.FieldType} */ std::ffi::c_void";
                 
@@ -69,6 +75,18 @@ public static class RustBindGen
                 }
                 
                 sb.AppendLine($"    pub {ToSnakeCase(field.Name)}: {rustFieldType},");
+            }
+            foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                var rustPropType = MapCSharpTypeToRust(prop.PropertyType) ??
+                                   $"/* Unsupported property type {prop.PropertyType} */ std::ffi::c_void";
+                
+                if (prop.GetCustomAttribute<DescriptionAttribute>() is { } desc)
+                {
+                    sb.AppendLine($"    /// {desc.Description.Replace("\n", "\n    /// ")}");
+                }
+                
+                sb.AppendLine($"    pub {ToSnakeCase(prop.Name)}: {rustPropType},");
             }
 
             sb.AppendLine($"}}");
